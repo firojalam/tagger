@@ -66,6 +66,18 @@ def word_mapping(sentences, lower):
     )
     return dico, word_to_id, id_to_word
 
+def pos_mapping(sentences):
+    """
+    Create a dictionary and a mapping of words, sorted by frequency.
+    """
+    pos = [[x[1] for x in s] for s in sentences]
+    dico = create_dico(pos)
+    dico['<UNK>'] = 10000000
+    pos_to_id, id_to_pos = create_mapping(dico)
+    print "Found %i unique words (%i in total)" % (
+        len(dico), sum(len(x) for x in pos)
+    )
+    return dico, pos_to_id, id_to_pos
 
 def char_mapping(sentences):
     """
@@ -162,7 +174,7 @@ def prepare_sentence(str_words, word_to_id, char_to_id, lower=False):
     }
 
 
-def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
+def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, pos_to_id, lower=False):
     """
     Prepare the dataset. Return a list of lists of dictionaries containing:
         - word indexes
@@ -173,8 +185,11 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
     data = []
     for s in sentences:
         str_words = [w[0] for w in s]
+        str_pos = [w[1] for w in s]
         words = [word_to_id[f(w) if f(w) in word_to_id else '<UNK>']
                  for w in str_words]
+        pos = [pos_to_id[f(w) if f(w) in pos_to_id else '<UNK>']
+                 for w in str_pos]
         # Skip characters that are not in the training set
         chars = [[char_to_id[c] for c in w if c in char_to_id]
                  for w in str_words]
@@ -185,6 +200,7 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
             'str_words': str_words,
             'words': words,
             'chars': chars,
+            'pos':pos,
             #'caps': caps,
             'digit': digit_feat,
             'tags': tags,

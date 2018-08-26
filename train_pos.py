@@ -9,10 +9,10 @@ from utils import create_input
 import loader
 
 from utils import models_path, evaluate, eval_script, eval_temp
-from loader import word_mapping, char_mapping, tag_mapping
-from loader import update_tag_scheme, prepare_dataset
-from loader import augment_with_pretrained
-from model import Model
+from loader_pos import word_mapping, pos_mapping, char_mapping, tag_mapping
+from loader_pos import update_tag_scheme, prepare_dataset
+from loader_pos import augment_with_pretrained
+from model_pos import Model
 
 # Read parameters from command line
 optparser = optparse.OptionParser()
@@ -73,7 +73,7 @@ optparser.add_option(
     type='int', help="Load all embeddings"
 )
 optparser.add_option(
-    "-a", "--cap_dim", default="0",
+    "-a", "--cap_dim", default="1",
     type='int', help="Capitalization feature dimension (0 to disable)"
 )
 optparser.add_option(
@@ -166,22 +166,21 @@ else:
     dico_words_train = dico_words
 
 # Create a dictionary and a mapping for words / POS tags / tags
+dico_pos, pos_to_id, id_to_pos = pos_mapping(train_sentences)
 dico_chars, char_to_id, id_to_char = char_mapping(train_sentences)
 dico_tags, tag_to_id, id_to_tag = tag_mapping(train_sentences)
 
 # Index data
-train_data = prepare_dataset(train_sentences, word_to_id, char_to_id, tag_to_id, lower)
-dev_data = prepare_dataset(dev_sentences, word_to_id, char_to_id, tag_to_id, lower)
-test_data = prepare_dataset(
-    test_sentences, word_to_id, char_to_id, tag_to_id, lower
-)
+train_data = prepare_dataset(train_sentences, word_to_id, char_to_id, tag_to_id,pos_to_id, lower)
+dev_data = prepare_dataset(dev_sentences, word_to_id, char_to_id, tag_to_id, pos_to_id, lower)
+test_data = prepare_dataset(test_sentences, word_to_id, char_to_id, tag_to_id, pos_to_id, lower)
 
 print "%i / %i / %i sentences in train / dev / test." % (
     len(train_data), len(dev_data), len(test_data))
 
 # Save the mappings to disk
 print 'Saving the mappings to disk...'
-model.save_mappings(id_to_word, id_to_char, id_to_tag)
+model.save_mappings(id_to_word, id_to_char, id_to_tag,id_to_pos)
 
 # Build the model
 f_train, f_eval = model.build(**parameters)
